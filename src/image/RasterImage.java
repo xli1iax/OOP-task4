@@ -2,6 +2,8 @@ package image;
 
 import manipulation.Normalizable;
 import manipulation.Rotatable;
+import manipulation.RotationDirection;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.FileInputStream;
@@ -13,7 +15,7 @@ import java.io.IOException;
  * It implements additional manipulation interfaces: {@link Normalizable}, {@link Rotatable},
  * as well as {@link Savable}.
  */
-public class RasterImage implements Savable {
+public class RasterImage implements Savable, Normalizable, Rotatable {
 
     // contents, do not change
     private BufferedImage image;
@@ -96,4 +98,72 @@ public class RasterImage implements Savable {
             throw new IllegalArgumentException("Could not save image " + path);
         }
     }
+
+    @Override
+    public void normalize() {
+     int width = image.getWidth();
+     int height = image.getHeight();
+     int maxSum = 0;
+     if(image == null) return;
+        for(int i  = 0; i < width; i++) {
+            for(int j = 0; j < height; j++) {
+                int rgb = image.getRGB(i, j);
+                int[] rgbArr = rgbToArray(rgb);
+
+                int sum = rgbArr[0] + rgbArr[1] + rgbArr[2];
+
+                if(sum > maxSum) maxSum = sum;
+            }
+        }
+
+        for(int i  = 0; i < width; i++) {
+            for(int j = 0; j < height; j++) {
+                int rgb = image.getRGB(i, j);
+                int[] rgbArr = rgbToArray(rgb);
+
+                int sum = rgbArr[0] + rgbArr[1] + rgbArr[2];
+                if (sum == 0) continue;
+                double scale = (double) maxSum /sum;
+                rgbArr[0] = (int) Math.min(255, rgbArr[0] * scale);
+                rgbArr[1] = (int) Math.min(255, rgbArr[1] * scale);
+                rgbArr[2] = (int) Math.min(255, rgbArr[2] * scale);
+
+                image.setRGB(i, j, arrayToRgb(rgbArr));
+            }
+        }
+    }
+
+    @Override
+    public void rotate(RotationDirection direction) {
+        if (direction == null) {
+            throw new IllegalArgumentException("Rotation direction cannot be null");
+        }
+
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        BufferedImage rotatedImage;
+
+        if (direction == RotationDirection.RIGHT) {
+            rotatedImage = new BufferedImage(height, width, image.getType());
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    rotatedImage.setRGB(height - 1 - y, x, image.getRGB(x, y));
+                }
+            }
+        } else if (direction == RotationDirection.LEFT) {
+            rotatedImage = new BufferedImage(height, width, image.getType());
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < height; y++) {
+                    rotatedImage.setRGB(y, width - 1 - x, image.getRGB(x, y));
+                }
+            }
+        } else {
+            throw new IllegalArgumentException("Unknown rotation direction: " + direction);
+        }
+
+        image = rotatedImage;
+    }
+
+
 }

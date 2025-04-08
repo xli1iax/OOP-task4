@@ -18,7 +18,7 @@ class TextImageTest {
     TextImage cooked_right;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         cooked = new TextImage("text");
         cooked_left = new TextImage("text_left");
         cooked_right = new TextImage("text_right");
